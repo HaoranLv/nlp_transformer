@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 import copy
 import unittest
 
@@ -28,7 +29,6 @@ from transformers import (
     MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING,
     MODEL_FOR_TABLE_QUESTION_ANSWERING_MAPPING,
     MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING,
-    TapasConfig,
     is_torch_available,
 )
 from transformers.file_utils import cached_property
@@ -43,6 +43,7 @@ if is_torch_available():
     import torch
 
     from transformers import (
+        TapasConfig,
         TapasForMaskedLM,
         TapasForQuestionAnswering,
         TapasForSequenceClassification,
@@ -105,7 +106,7 @@ class TapasModelTester:
         average_logits_per_cell=True,
         select_one_column=True,
         allow_empty_column_selection=False,
-        init_cell_selection_weights_to_zero=True,
+        init_cell_selection_weights_to_zero=False,
         reset_position_index_per_cell=True,
         disable_per_token_loss=False,
         scope=None,
@@ -182,24 +183,7 @@ class TapasModelTester:
             float_answer = floats_tensor([self.batch_size]).to(torch_device)
             aggregation_labels = ids_tensor([self.batch_size], self.num_aggregation_labels).to(torch_device)
 
-        config = self.get_config()
-
-        return (
-            config,
-            input_ids,
-            input_mask,
-            token_type_ids,
-            sequence_labels,
-            token_labels,
-            labels,
-            numeric_values,
-            numeric_values_scale,
-            float_answer,
-            aggregation_labels,
-        )
-
-    def get_config(self):
-        return TapasConfig(
+        config = TapasConfig(
             vocab_size=self.vocab_size,
             hidden_size=self.hidden_size,
             num_hidden_layers=self.num_hidden_layers,
@@ -234,6 +218,20 @@ class TapasModelTester:
             init_cell_selection_weights_to_zero=self.init_cell_selection_weights_to_zero,
             reset_position_index_per_cell=self.reset_position_index_per_cell,
             disable_per_token_loss=self.disable_per_token_loss,
+        )
+
+        return (
+            config,
+            input_ids,
+            input_mask,
+            token_type_ids,
+            sequence_labels,
+            token_labels,
+            labels,
+            numeric_values,
+            numeric_values_scale,
+            float_answer,
+            aggregation_labels,
         )
 
     def create_and_check_model(

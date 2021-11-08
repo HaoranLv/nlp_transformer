@@ -26,7 +26,6 @@ from datetime import datetime
 
 import numpy as np
 import torch
-from torch import nn
 from torch.utils.data import DataLoader, SequentialSampler, Subset
 from torch.utils.data.distributed import DistributedSampler
 from tqdm import tqdm
@@ -416,11 +415,11 @@ def main():
     # Distributed and parallel training
     model.to(args.device)
     if args.local_rank != -1:
-        model = nn.parallel.DistributedDataParallel(
+        model = torch.nn.parallel.DistributedDataParallel(
             model, device_ids=[args.local_rank], output_device=args.local_rank, find_unused_parameters=True
         )
     elif args.n_gpu > 1:
-        model = nn.DataParallel(model)
+        model = torch.nn.DataParallel(model)
 
     # Print/save training arguments
     os.makedirs(args.output_dir, exist_ok=True)

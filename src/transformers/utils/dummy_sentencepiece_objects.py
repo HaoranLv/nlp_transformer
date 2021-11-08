@@ -7,8 +7,8 @@ class AlbertTokenizer:
         requires_backends(self, ["sentencepiece"])
 
     @classmethod
-    def from_pretrained(cls, *args, **kwargs):
-        requires_backends(cls, ["sentencepiece"])
+    def from_pretrained(self, *args, **kwargs):
+        requires_backends(self, ["sentencepiece"])
 
 
 class BarthezTokenizer:
@@ -16,17 +16,8 @@ class BarthezTokenizer:
         requires_backends(self, ["sentencepiece"])
 
     @classmethod
-    def from_pretrained(cls, *args, **kwargs):
-        requires_backends(cls, ["sentencepiece"])
-
-
-class BartphoTokenizer:
-    def __init__(self, *args, **kwargs):
+    def from_pretrained(self, *args, **kwargs):
         requires_backends(self, ["sentencepiece"])
-
-    @classmethod
-    def from_pretrained(cls, *args, **kwargs):
-        requires_backends(cls, ["sentencepiece"])
 
 
 class BertGenerationTokenizer:
@@ -34,17 +25,8 @@ class BertGenerationTokenizer:
         requires_backends(self, ["sentencepiece"])
 
     @classmethod
-    def from_pretrained(cls, *args, **kwargs):
-        requires_backends(cls, ["sentencepiece"])
-
-
-class BigBirdTokenizer:
-    def __init__(self, *args, **kwargs):
+    def from_pretrained(self, *args, **kwargs):
         requires_backends(self, ["sentencepiece"])
-
-    @classmethod
-    def from_pretrained(cls, *args, **kwargs):
-        requires_backends(cls, ["sentencepiece"])
 
 
 class CamembertTokenizer:
@@ -52,8 +34,8 @@ class CamembertTokenizer:
         requires_backends(self, ["sentencepiece"])
 
     @classmethod
-    def from_pretrained(cls, *args, **kwargs):
-        requires_backends(cls, ["sentencepiece"])
+    def from_pretrained(self, *args, **kwargs):
+        requires_backends(self, ["sentencepiece"])
 
 
 class DebertaV2Tokenizer:
@@ -61,17 +43,8 @@ class DebertaV2Tokenizer:
         requires_backends(self, ["sentencepiece"])
 
     @classmethod
-    def from_pretrained(cls, *args, **kwargs):
-        requires_backends(cls, ["sentencepiece"])
-
-
-class LayoutXLMTokenizer:
-    def __init__(self, *args, **kwargs):
+    def from_pretrained(self, *args, **kwargs):
         requires_backends(self, ["sentencepiece"])
-
-    @classmethod
-    def from_pretrained(cls, *args, **kwargs):
-        requires_backends(cls, ["sentencepiece"])
 
 
 class M2M100Tokenizer:
@@ -79,8 +52,8 @@ class M2M100Tokenizer:
         requires_backends(self, ["sentencepiece"])
 
     @classmethod
-    def from_pretrained(cls, *args, **kwargs):
-        requires_backends(cls, ["sentencepiece"])
+    def from_pretrained(self, *args, **kwargs):
+        requires_backends(self, ["sentencepiece"])
 
 
 class MarianTokenizer:
@@ -88,8 +61,8 @@ class MarianTokenizer:
         requires_backends(self, ["sentencepiece"])
 
     @classmethod
-    def from_pretrained(cls, *args, **kwargs):
-        requires_backends(cls, ["sentencepiece"])
+    def from_pretrained(self, *args, **kwargs):
+        requires_backends(self, ["sentencepiece"])
 
 
 class MBart50Tokenizer:
@@ -97,8 +70,8 @@ class MBart50Tokenizer:
         requires_backends(self, ["sentencepiece"])
 
     @classmethod
-    def from_pretrained(cls, *args, **kwargs):
-        requires_backends(cls, ["sentencepiece"])
+    def from_pretrained(self, *args, **kwargs):
+        requires_backends(self, ["sentencepiece"])
 
 
 class MBartTokenizer:
@@ -106,8 +79,8 @@ class MBartTokenizer:
         requires_backends(self, ["sentencepiece"])
 
     @classmethod
-    def from_pretrained(cls, *args, **kwargs):
-        requires_backends(cls, ["sentencepiece"])
+    def from_pretrained(self, *args, **kwargs):
+        requires_backends(self, ["sentencepiece"])
 
 
 class MT5Tokenizer:
@@ -115,8 +88,8 @@ class MT5Tokenizer:
         requires_backends(self, ["sentencepiece"])
 
     @classmethod
-    def from_pretrained(cls, *args, **kwargs):
-        requires_backends(cls, ["sentencepiece"])
+    def from_pretrained(self, *args, **kwargs):
+        requires_backends(self, ["sentencepiece"])
 
 
 class PegasusTokenizer:
@@ -124,8 +97,8 @@ class PegasusTokenizer:
         requires_backends(self, ["sentencepiece"])
 
     @classmethod
-    def from_pretrained(cls, *args, **kwargs):
-        requires_backends(cls, ["sentencepiece"])
+    def from_pretrained(self, *args, **kwargs):
+        requires_backends(self, ["sentencepiece"])
 
 
 class ReformerTokenizer:
@@ -133,17 +106,8 @@ class ReformerTokenizer:
         requires_backends(self, ["sentencepiece"])
 
     @classmethod
-    def from_pretrained(cls, *args, **kwargs):
-        requires_backends(cls, ["sentencepiece"])
-
-
-class RemBertTokenizer:
-    def __init__(self, *args, **kwargs):
+    def from_pretrained(self, *args, **kwargs):
         requires_backends(self, ["sentencepiece"])
-
-    @classmethod
-    def from_pretrained(cls, *args, **kwargs):
-        requires_backends(cls, ["sentencepiece"])
 
 
 class Speech2TextTokenizer:
@@ -151,8 +115,8 @@ class Speech2TextTokenizer:
         requires_backends(self, ["sentencepiece"])
 
     @classmethod
-    def from_pretrained(cls, *args, **kwargs):
-        requires_backends(cls, ["sentencepiece"])
+    def from_pretrained(self, *args, **kwargs):
+        requires_backends(self, ["sentencepiece"])
 
 
 class T5Tokenizer:
@@ -160,8 +124,8 @@ class T5Tokenizer:
         requires_backends(self, ["sentencepiece"])
 
     @classmethod
-    def from_pretrained(cls, *args, **kwargs):
-        requires_backends(cls, ["sentencepiece"])
+    def from_pretrained(self, *args, **kwargs):
+        requires_backends(self, ["sentencepiece"])
 
 
 class XLMProphetNetTokenizer:
@@ -169,8 +133,8 @@ class XLMProphetNetTokenizer:
         requires_backends(self, ["sentencepiece"])
 
     @classmethod
-    def from_pretrained(cls, *args, **kwargs):
-        requires_backends(cls, ["sentencepiece"])
+    def from_pretrained(self, *args, **kwargs):
+        requires_backends(self, ["sentencepiece"])
 
 
 class XLMRobertaTokenizer:
@@ -178,8 +142,8 @@ class XLMRobertaTokenizer:
         requires_backends(self, ["sentencepiece"])
 
     @classmethod
-    def from_pretrained(cls, *args, **kwargs):
-        requires_backends(cls, ["sentencepiece"])
+    def from_pretrained(self, *args, **kwargs):
+        requires_backends(self, ["sentencepiece"])
 
 
 class XLNetTokenizer:
@@ -187,5 +151,5 @@ class XLNetTokenizer:
         requires_backends(self, ["sentencepiece"])
 
     @classmethod
-    def from_pretrained(cls, *args, **kwargs):
-        requires_backends(cls, ["sentencepiece"])
+    def from_pretrained(self, *args, **kwargs):
+        requires_backends(self, ["sentencepiece"])

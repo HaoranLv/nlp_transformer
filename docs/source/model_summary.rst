@@ -28,12 +28,6 @@ Each one of the models in the library falls into one of the following categories
   * :ref:`multimodal-models`
   * :ref:`retrieval-based-models`
 
-.. raw:: html
-
-   <iframe width="560" height="315" src="https://www.youtube.com/embed/H39Z_720T5s" title="YouTube video player"
-   frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope;
-   picture-in-picture" allowfullscreen></iframe>
-
 Autoregressive models are pretrained on the classic language modeling task: guess the next token having read all the
 previous ones. They correspond to the decoder of the original transformer model, and a mask is used on top of the full
 sentence so that the attention heads can only see what was before in the text, and not what’s after. Although those
@@ -60,17 +54,11 @@ Multimodal models mix text inputs with other kinds (e.g. images) and are more sp
 
 .. _autoregressive-models:
 
-Decoders or autoregressive models
+Autoregressive models
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 As mentioned before, these models rely on the decoder part of the original transformer and use an attention mask so
 that at each position, the model can only look at the tokens before the attention heads.
-
-.. raw:: html
-
-   <iframe width="560" height="315" src="https://www.youtube.com/embed/d_ixlCubqQw" title="YouTube video player"
-   frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope;
-   picture-in-picture" allowfullscreen></iframe>
 
 Original GPT
 -----------------------------------------------------------------------------------------------------------------------
@@ -227,18 +215,12 @@ multiple choice classification and question answering.
 
 .. _autoencoding-models:
 
-Encoders or autoencoding models
+Autoencoding models
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 As mentioned before, these models rely on the encoder part of the original transformer and use no mask so the model can
 look at all the tokens in the attention heads. For pretraining, targets are the original sentences and inputs are their
 corrupted versions.
-
-.. raw:: html
-
-   <iframe width="560" height="315" src="https://www.youtube.com/embed/MUqNwgPjJvQ" title="YouTube video player"
-   frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope;
-   picture-in-picture" allowfullscreen></iframe>
 
 BERT
 -----------------------------------------------------------------------------------------------------------------------
@@ -543,12 +525,6 @@ Sequence-to-sequence models
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 As mentioned before, these models keep both the encoder and the decoder of the original transformer.
-
-.. raw:: html
-
-   <iframe width="560" height="315" src="https://www.youtube.com/embed/0_4KEb08xrE" title="YouTube video player"
-   frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope;
-   picture-in-picture" allowfullscreen></iframe>
 
 BART
 -----------------------------------------------------------------------------------------------------------------------

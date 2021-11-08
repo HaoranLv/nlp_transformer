@@ -60,6 +60,7 @@ encode the text and prepare the images. The following example shows how to get t
 
 .. code-block::
 
+        >>> import torch
         >>> from PIL import Image
         >>> import requests
 
@@ -151,24 +152,3 @@ CLIPVisionModel
 
 .. autoclass:: transformers.CLIPVisionModel
     :members: forward
-
-
-FlaxCLIPModel
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: transformers.FlaxCLIPModel
-    :members: __call__, get_text_features, get_image_features
-
-
-FlaxCLIPTextModel
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: transformers.FlaxCLIPTextModel
-    :members: __call__
-
-
-FlaxCLIPVisionModel
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: transformers.FlaxCLIPVisionModel
-    :members: __call__

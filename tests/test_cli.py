@@ -27,6 +27,6 @@ class CLITest(unittest.TestCase):
 
         with CaptureStd() as cs:
             transformers.commands.transformers_cli.main()
-        self.assertIn("Python version", cs.out)
-        self.assertIn("Platform", cs.out)
-        self.assertIn("Using distributed or parallel set-up in script?", cs.out)
+        assert "Python version" in cs.out
+        assert "Platform" in cs.out
+        assert "Using distributed or parallel set-up in script?" in cs.out

@@ -38,32 +38,31 @@ def handle_test_results(test_results):
     return failed, success, time_spent
 
 
-def format_for_slack(total_results, results, scheduled: bool, title: str):
-    print(total_results, results)
+def format_for_slack(total_results, results, scheduled: bool):
+    print(results)
     header = {
         "type": "header",
         "text": {
             "type": "plain_text",
-            "text": title,
+            "text": "🤗 Results of the scheduled tests, March 11, 2021." if scheduled else "🤗 Self-push results",
             "emoji": True,
         },
     }
 
-    if total_results["failed"] > 0:
-        total = {
+    total = (
+        {
             "type": "section",
             "fields": [
                 {"type": "mrkdwn", "text": f"*Failures:*\n❌ {total_results['failed']} failures."},
                 {"type": "mrkdwn", "text": f"*Passed:*\n✅ {total_results['success']} tests passed."},
             ],
         }
-    else:
-        total = {
+        if total_results["failed"] > 0
+        else {
             "type": "section",
-            "fields": [
-                {"type": "mrkdwn", "text": "\n🌞 All tests passed."},
-            ],
+            "fields": [{"type": "mrkdwn", "text": f"*Congrats!*\nAll {total_results['success']} tests pass."}],
         }
+    )
 
     blocks = [header, total]
 
@@ -83,7 +82,7 @@ def format_for_slack(total_results, results, scheduled: bool, title: str):
                     ],
                 }
             )
-    elif not scheduled:
+    else:
         for key, result in results.items():
             blocks.append(
                 {"type": "section", "fields": [{"type": "mrkdwn", "text": f"*{key}*\n{result['time_spent']}."}]}
@@ -93,7 +92,9 @@ def format_for_slack(total_results, results, scheduled: bool, title: str):
         "type": "section",
         "text": {
             "type": "mrkdwn",
-            "text": f"<https://github.com/huggingface/transformers/actions/runs/{os.environ['GITHUB_RUN_ID']}|View on GitHub>",
+            "text": "<https://github.com/huggingface/transformers/actions/workflows/self-scheduled.yml|View on GitHub>"
+            if scheduled
+            else "<https://github.com/huggingface/transformers/actions/workflows/self-push.yml|View on GitHub>",
         },
     }
 
@@ -105,13 +106,7 @@ def format_for_slack(total_results, results, scheduled: bool, title: str):
 
 
 if __name__ == "__main__":
-    arguments = sys.argv[1:]
-
-    if "scheduled" in arguments:
-        arguments.remove("scheduled")
-        scheduled = True
-    else:
-        scheduled = False
+    scheduled = sys.argv[1] == "scheduled"
 
     if scheduled:
         # The scheduled run has several artifacts for each job.
@@ -155,21 +150,7 @@ if __name__ == "__main__":
         }
 
     client = WebClient(token=os.environ["CI_SLACK_BOT_TOKEN"])
-
-    if not scheduled:
-        channel_id = os.environ["CI_SLACK_CHANNEL_ID"]
-    elif scheduled and len(arguments):
-        channel_id = os.environ["CI_SLACK_CHANNEL_ID_PAST_FUTURE"]
-    else:
-        channel_id = os.environ["CI_SLACK_CHANNEL_ID_DAILY"]
-
-    if scheduled:
-        title = "🤗 Results of the scheduled tests."
-    else:
-        title = "🤗 Self-push results"
-
-    if len(arguments):
-        title = f"{arguments} " + title
+    channel_id = os.environ["CI_SLACK_CHANNEL_ID"]
 
     try:
         results = {}
@@ -201,13 +182,12 @@ if __name__ == "__main__":
             for result_key in test_results_keys:
                 total[result_key] += job_result[result_key]
 
-        if total["failed"] != 0 or scheduled:
-            to_be_sent_to_slack = format_for_slack(total, results, scheduled, title)
+        to_be_sent_to_slack = format_for_slack(total, results, scheduled)
 
-            result = client.chat_postMessage(
-                channel=channel_id,
-                blocks=to_be_sent_to_slack["blocks"],
-            )
+        result = client.chat_postMessage(
+            channel=channel_id,
+            blocks=to_be_sent_to_slack["blocks"],
+        )
 
         for job, job_result in results.items():
             if len(job_result["failures"]):

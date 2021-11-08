@@ -16,7 +16,7 @@
 import collections
 import os
 from shutil import copyfile
-from typing import Any, Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 from ...tokenization_utils import PreTrainedTokenizer
 from ...utils import logging
@@ -56,7 +56,7 @@ def load_vocab(vocab_file):
 
 class XLMProphetNetTokenizer(PreTrainedTokenizer):
     """
-    Adapted from :class:`~transformers.RobertaTokenizer` and :class:`~transformers.XLNetTokenizer`. Based on
+    Adapted from :class:`~transformers.RobertaTokenizer` and class:`~transformers.XLNetTokenizer`. Based on
     `SentencePiece <https://github.com/google/sentencepiece>`__.
 
     This tokenizer inherits from :class:`~transformers.PreTrainedTokenizer` which contains most of the main methods.
@@ -96,20 +96,6 @@ class XLMProphetNetTokenizer(PreTrainedTokenizer):
             modeling. This is the token which the model will try to predict.
         additional_special_tokens (:obj:`List[str]`, `optional`, defaults to :obj:`["<s>NOTUSED", "</s>NOTUSED"]`):
             Additional special tokens used by the tokenizer.
-        sp_model_kwargs (:obj:`dict`, `optional`):
-            Will be passed to the ``SentencePieceProcessor.__init__()`` method. The `Python wrapper for SentencePiece
-            <https://github.com/google/sentencepiece/tree/master/python>`__ can be used, among other things, to set:
-
-            - ``enable_sampling``: Enable subword regularization.
-            - ``nbest_size``: Sampling parameters for unigram. Invalid for BPE-Dropout.
-
-              - ``nbest_size = {0,1}``: No sampling is performed.
-              - ``nbest_size > 1``: samples from the nbest_size results.
-              - ``nbest_size < 0``: assuming that nbest_size is infinite and samples from the all hypothesis (lattice)
-                using forward-filtering-and-backward-sampling algorithm.
-
-            - ``alpha``: Smoothing parameter for unigram sampling, and dropout probability of merge operations for
-              BPE-dropout.
 
     Attributes:
         sp_model (:obj:`SentencePieceProcessor`):
@@ -131,11 +117,8 @@ class XLMProphetNetTokenizer(PreTrainedTokenizer):
         pad_token="[PAD]",
         cls_token="[CLS]",
         mask_token="[MASK]",
-        sp_model_kwargs: Optional[Dict[str, Any]] = None,
         **kwargs
-    ) -> None:
-        self.sp_model_kwargs = {} if sp_model_kwargs is None else sp_model_kwargs
-
+    ):
         super().__init__(
             bos_token=bos_token,
             eos_token=eos_token,
@@ -144,7 +127,6 @@ class XLMProphetNetTokenizer(PreTrainedTokenizer):
             pad_token=pad_token,
             cls_token=cls_token,
             mask_token=mask_token,
-            sp_model_kwargs=self.sp_model_kwargs,
             **kwargs,
         )
 
@@ -152,12 +134,12 @@ class XLMProphetNetTokenizer(PreTrainedTokenizer):
             import sentencepiece as spm
         except ImportError:
             logger.warning(
-                "You need to install SentencePiece to use XLMRobertaTokenizer: https://github.com/google/sentencepiece "
+                "You need to install SentencePiece to use XLMRobertaTokenizer: https://github.com/google/sentencepiece"
                 "pip install sentencepiece"
             )
             raise
 
-        self.sp_model = spm.SentencePieceProcessor(**self.sp_model_kwargs)
+        self.sp_model = spm.SentencePieceProcessor()
         self.sp_model.Load(str(vocab_file))
         self.vocab_file = vocab_file
 
@@ -191,16 +173,11 @@ class XLMProphetNetTokenizer(PreTrainedTokenizer):
             import sentencepiece as spm
         except ImportError:
             logger.warning(
-                "You need to install SentencePiece to use XLMRobertaTokenizer: https://github.com/google/sentencepiece "
+                "You need to install SentencePiece to use XLMRobertaTokenizer: https://github.com/google/sentencepiece"
                 "pip install sentencepiece"
             )
             raise
-
-        # for backward compatibility
-        if not hasattr(self, "sp_model_kwargs"):
-            self.sp_model_kwargs = {}
-
-        self.sp_model = spm.SentencePieceProcessor(**self.sp_model_kwargs)
+        self.sp_model = spm.SentencePieceProcessor()
         self.sp_model.Load(self.vocab_file)
 
     def get_special_tokens_mask(
@@ -264,8 +241,8 @@ class XLMProphetNetTokenizer(PreTrainedTokenizer):
         vocab.update(self.added_tokens_encoder)
         return vocab
 
-    def _tokenize(self, text: str) -> str:
-        return self.sp_model.encode(text, out_type=str)
+    def _tokenize(self, text):
+        return self.sp_model.EncodeAsPieces(text)
 
     def _convert_token_to_id(self, token):
         """Converts a token (str) in an id using the vocab."""

@@ -19,7 +19,7 @@ import os
 import re
 import warnings
 from shutil import copyfile
-from typing import Any, Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 import sentencepiece as spm
 
@@ -81,20 +81,6 @@ class T5Tokenizer(PreTrainedTokenizer):
             <https://github.com/google-research/text-to-text-transfer-transformer/blob/9fd7b14a769417be33bc6c850f9598764913c833/t5/data/preprocessors.py#L2117>`__).
         additional_special_tokens (:obj:`List[str]`, `optional`):
             Additional special tokens used by the tokenizer.
-        sp_model_kwargs (:obj:`dict`, `optional`):
-            Will be passed to the ``SentencePieceProcessor.__init__()`` method. The `Python wrapper for SentencePiece
-            <https://github.com/google/sentencepiece/tree/master/python>`__ can be used, among other things, to set:
-
-            - ``enable_sampling``: Enable subword regularization.
-            - ``nbest_size``: Sampling parameters for unigram. Invalid for BPE-Dropout.
-
-              - ``nbest_size = {0,1}``: No sampling is performed.
-              - ``nbest_size > 1``: samples from the nbest_size results.
-              - ``nbest_size < 0``: assuming that nbest_size is infinite and samples from the all hypothesis (lattice)
-                using forward-filtering-and-backward-sampling algorithm.
-
-            - ``alpha``: Smoothing parameter for unigram sampling, and dropout probability of merge operations for
-              BPE-dropout.
 
     Attributes:
         sp_model (:obj:`SentencePieceProcessor`):
@@ -114,9 +100,8 @@ class T5Tokenizer(PreTrainedTokenizer):
         pad_token="<pad>",
         extra_ids=100,
         additional_special_tokens=None,
-        sp_model_kwargs: Optional[Dict[str, Any]] = None,
         **kwargs
-    ) -> None:
+    ):
         # Add extra_ids to the special token list
         if extra_ids > 0 and additional_special_tokens is None:
             additional_special_tokens = [f"<extra_id_{i}>" for i in range(extra_ids)]
@@ -129,22 +114,19 @@ class T5Tokenizer(PreTrainedTokenizer):
                     "In this case the additional_special_tokens must include the extra_ids tokens"
                 )
 
-        self.sp_model_kwargs = {} if sp_model_kwargs is None else sp_model_kwargs
-
         super().__init__(
             eos_token=eos_token,
             unk_token=unk_token,
             pad_token=pad_token,
             extra_ids=extra_ids,
             additional_special_tokens=additional_special_tokens,
-            sp_model_kwargs=self.sp_model_kwargs,
             **kwargs,
         )
 
         self.vocab_file = vocab_file
         self._extra_ids = extra_ids
 
-        self.sp_model = spm.SentencePieceProcessor(**self.sp_model_kwargs)
+        self.sp_model = spm.SentencePieceProcessor()
         self.sp_model.Load(vocab_file)
 
     @property
@@ -249,17 +231,16 @@ class T5Tokenizer(PreTrainedTokenizer):
 
     def __setstate__(self, d):
         self.__dict__ = d
-
-        # for backward compatibility
-        if not hasattr(self, "sp_model_kwargs"):
-            self.sp_model_kwargs = {}
-
-        self.sp_model = spm.SentencePieceProcessor(**self.sp_model_kwargs)
+        self.sp_model = spm.SentencePieceProcessor()
         self.sp_model.Load(self.vocab_file)
 
-    def _tokenize(self, text: str) -> List[str]:
+    def _tokenize(self, text, sample=False):
         """Take as input a string and return a list of strings (tokens) for words/sub-words"""
-        return self.sp_model.encode(text, out_type=str)
+        if not sample:
+            pieces = self.sp_model.EncodeAsPieces(text)
+        else:
+            pieces = self.sp_model.SampleEncodeAsPieces(text, 64, 0.1)
+        return pieces
 
     def _convert_token_to_id(self, token):
         """Converts a token (str) in an id using the vocab."""

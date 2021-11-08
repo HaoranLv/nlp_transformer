@@ -53,8 +53,10 @@ PreTrainedTokenizer
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: transformers.PreTrainedTokenizer
-    :special-members: __call__, batch_decode, decode, encode, push_to_hub
-    :members: 
+    :special-members: __call__
+    :members: batch_decode, convert_ids_to_tokens, convert_tokens_to_ids, convert_tokens_to_string, decode, encode, 
+        get_added_vocab, get_special_tokens_mask, num_special_tokens_to_add, prepare_for_tokenization, tokenize,
+        vocab_size
 
 
 PreTrainedTokenizerFast
@@ -66,8 +68,10 @@ loaded very simply into 🤗 transformers. Take a look at the :doc:`Using tokeni
 <../fast_tokenizers>` page to understand how this is done.
 
 .. autoclass:: transformers.PreTrainedTokenizerFast
-    :special-members: __call__, batch_decode, decode, encode, push_to_hub
-    :members:
+    :special-members: __call__
+    :members: batch_decode, convert_ids_to_tokens, convert_tokens_to_ids, convert_tokens_to_string, decode, encode, 
+        get_added_vocab, get_special_tokens_mask, num_special_tokens_to_add,
+        set_truncation_and_padding,tokenize, vocab_size
 
 
 BatchEncoding

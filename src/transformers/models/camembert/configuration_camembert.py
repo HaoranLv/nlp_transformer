@@ -15,10 +15,6 @@
 # limitations under the License.
 """ CamemBERT configuration """
 
-from collections import OrderedDict
-from typing import Mapping
-
-from ...onnx import OnnxConfig
 from ...utils import logging
 from ..roberta.configuration_roberta import RobertaConfig
 
@@ -39,14 +35,3 @@ class CamembertConfig(RobertaConfig):
     """
 
     model_type = "camembert"
-
-
-class CamembertOnnxConfig(OnnxConfig):
-    @property
-    def inputs(self) -> Mapping[str, Mapping[int, str]]:
-        return OrderedDict(
-            [
-                ("input_ids", {0: "batch", 1: "sequence"}),
-                ("attention_mask", {0: "batch", 1: "sequence"}),
-            ]
-        )

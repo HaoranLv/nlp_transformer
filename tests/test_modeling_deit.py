@@ -18,9 +18,7 @@
 import inspect
 import unittest
 
-from transformers import DeiTConfig
 from transformers.file_utils import cached_property, is_torch_available, is_vision_available
-from transformers.models.auto import get_values
 from transformers.testing_utils import require_torch, require_vision, slow, torch_device
 
 from .test_configuration_common import ConfigTester
@@ -29,10 +27,10 @@ from .test_modeling_common import ModelTesterMixin, floats_tensor, ids_tensor
 
 if is_torch_available():
     import torch
-    from torch import nn
 
     from transformers import (
         MODEL_MAPPING,
+        DeiTConfig,
         DeiTForImageClassification,
         DeiTForImageClassificationWithTeacher,
         DeiTModel,
@@ -93,12 +91,7 @@ class DeiTModelTester:
         if self.use_labels:
             labels = ids_tensor([self.batch_size], self.type_sequence_label_size)
 
-        config = self.get_config()
-
-        return config, pixel_values, labels
-
-    def get_config(self):
-        return DeiTConfig(
+        config = DeiTConfig(
             image_size=self.image_size,
             patch_size=self.patch_size,
             num_channels=self.num_channels,
@@ -112,6 +105,8 @@ class DeiTModelTester:
             is_decoder=False,
             initializer_range=self.initializer_range,
         )
+
+        return config, pixel_values, labels
 
     def create_and_check_model(self, config, pixel_values, labels):
         model = DeiTModel(config=config)
@@ -181,9 +176,9 @@ class DeiTModelTest(ModelTesterMixin, unittest.TestCase):
 
         for model_class in self.all_model_classes:
             model = model_class(config)
-            self.assertIsInstance(model.get_input_embeddings(), (nn.Module))
+            self.assertIsInstance(model.get_input_embeddings(), (torch.nn.Module))
             x = model.get_output_embeddings()
-            self.assertTrue(x is None or isinstance(x, nn.Linear))
+            self.assertTrue(x is None or isinstance(x, torch.nn.Linear))
 
     def test_forward_signature(self):
         config, _ = self.model_tester.prepare_config_and_inputs_for_common()
@@ -341,30 +336,9 @@ class DeiTModelTest(ModelTesterMixin, unittest.TestCase):
         for model_class in self.all_model_classes:
             # DeiTForImageClassificationWithTeacher supports inference-only
             if (
-                model_class in get_values(MODEL_MAPPING)
+                model_class in MODEL_MAPPING.values()
                 or model_class.__name__ == "DeiTForImageClassificationWithTeacher"
             ):
-                continue
-            model = model_class(config)
-            model.to(torch_device)
-            model.train()
-            inputs = self._prepare_for_class(inputs_dict, model_class, return_labels=True)
-            loss = model(**inputs).loss
-            loss.backward()
-
-    def test_training_gradient_checkpointing(self):
-        config, inputs_dict = self.model_tester.prepare_config_and_inputs_for_common()
-        if not self.model_tester.is_training:
-            return
-
-        config.use_cache = False
-        config.return_dict = True
-
-        for model_class in self.all_model_classes:
-            if model_class in get_values(MODEL_MAPPING) or not model_class.supports_gradient_checkpointing:
-                continue
-            # DeiTForImageClassificationWithTeacher supports inference-only
-            if model_class.__name__ == "DeiTForImageClassificationWithTeacher":
                 continue
             model = model_class(config)
             model.to(torch_device)
@@ -386,7 +360,7 @@ class DeiTModelTest(ModelTesterMixin, unittest.TestCase):
 
 # We will verify our results on an image of cute cats
 def prepare_img():
-    image = Image.open("./tests/fixtures/tests_samples/COCO/000000039769.png")
+    image = Image.open("./tests/fixtures/tests_samples/COCO/cats.png")
     return image
 
 

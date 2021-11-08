@@ -17,7 +17,7 @@
 
 import os
 from shutil import copyfile
-from typing import Any, Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 import sentencepiece as spm
 
@@ -54,7 +54,7 @@ PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES = {
 
 class XLMRobertaTokenizer(PreTrainedTokenizer):
     """
-    Adapted from :class:`~transformers.RobertaTokenizer` and :class:`~transformers.XLNetTokenizer`. Based on
+    Adapted from :class:`~transformers.RobertaTokenizer` and class:`~transformers.XLNetTokenizer`. Based on
     `SentencePiece <https://github.com/google/sentencepiece>`__.
 
     This tokenizer inherits from :class:`~transformers.PreTrainedTokenizer` which contains most of the main methods.
@@ -94,7 +94,7 @@ class XLMRobertaTokenizer(PreTrainedTokenizer):
             modeling. This is the token which the model will try to predict.
         additional_special_tokens (:obj:`List[str]`, `optional`, defaults to :obj:`["<s>NOTUSED", "</s>NOTUSED"]`):
             Additional special tokens used by the tokenizer.
-        sp_model_kwargs (:obj:`dict`, `optional`):
+        sp_model_kwargs (:obj:`dict`, `optional`, defaults to :obj:`None`):
             Will be passed to the ``SentencePieceProcessor.__init__()`` method. The `Python wrapper for SentencePiece
             <https://github.com/google/sentencepiece/tree/master/python>`__ can be used, among other things, to set:
 
@@ -129,9 +129,9 @@ class XLMRobertaTokenizer(PreTrainedTokenizer):
         unk_token="<unk>",
         pad_token="<pad>",
         mask_token="<mask>",
-        sp_model_kwargs: Optional[Dict[str, Any]] = None,
+        sp_model_kwargs=None,
         **kwargs
-    ) -> None:
+    ):
         # Mask token behave like a normal word, i.e. include the space before it
         mask_token = AddedToken(mask_token, lstrip=True, rstrip=False) if isinstance(mask_token, str) else mask_token
 
@@ -171,7 +171,6 @@ class XLMRobertaTokenizer(PreTrainedTokenizer):
     def __getstate__(self):
         state = self.__dict__.copy()
         state["sp_model"] = None
-        state["sp_model_proto"] = self.sp_model.serialized_model_proto()
         return state
 
     def __setstate__(self, d):
@@ -182,7 +181,7 @@ class XLMRobertaTokenizer(PreTrainedTokenizer):
             self.sp_model_kwargs = {}
 
         self.sp_model = spm.SentencePieceProcessor(**self.sp_model_kwargs)
-        self.sp_model.LoadFromSerializedProto(self.sp_model_proto)
+        self.sp_model.Load(self.vocab_file)
 
     def build_inputs_with_special_tokens(
         self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None
@@ -272,7 +271,7 @@ class XLMRobertaTokenizer(PreTrainedTokenizer):
         vocab.update(self.added_tokens_encoder)
         return vocab
 
-    def _tokenize(self, text: str) -> List[str]:
+    def _tokenize(self, text):
         return self.sp_model.encode(text, out_type=str)
 
     def _convert_token_to_id(self, token):

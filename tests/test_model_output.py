@@ -101,9 +101,3 @@ class ModelOutputTester(unittest.TestCase):
         x["a"] = 10
         self.assertEqual(x.a, 10)
         self.assertEqual(x["a"], 10)
-
-    def test_instantiate_from_dict(self):
-        x = ModelOutputTest({"a": 30, "b": 10})
-        self.assertEqual(list(x.keys()), ["a", "b"])
-        self.assertEqual(x.a, 30)
-        self.assertEqual(x.b, 10)

@@ -111,8 +111,7 @@ class PyTorchBenchmark(Benchmark):
 
         if self.args.fp16:
             logger.info("Running training in Mixed Precision...")
-            if not self.args.is_gpu:
-                raise ValueError("Mixed precision is possible only for GPU.")
+            assert self.args.is_gpu, "Mixed precision is possible only for GPU."
             # amp seems to have memory leaks so that memory usage
             # is measured using .half() for now https://github.com/NVIDIA/apex/issues/439
             model.half()
@@ -171,8 +170,7 @@ class PyTorchBenchmark(Benchmark):
 
         if self.args.fp16:
             logger.info("Running training in Mixed Precision...")
-            if not self.args.is_gpu:
-                raise ValueError("Mixed precision is possible only for GPU.")
+            assert self.args.is_gpu, "Mixed precision is possible only for GPU."
 
             # amp seems to have memory leaks so that memory usage
             # is measured using .half() for now https://github.com/NVIDIA/apex/issues/439

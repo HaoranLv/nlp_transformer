@@ -14,13 +14,13 @@
 # limitations under the License.
 """ Testing suite for the PyTorch Speech2Text model. """
 
+
 import copy
 import inspect
 import os
 import tempfile
 import unittest
 
-from transformers import Speech2TextConfig
 from transformers.file_utils import cached_property
 from transformers.testing_utils import (
     is_torch_available,
@@ -40,7 +40,12 @@ from .test_modeling_common import ModelTesterMixin, _config_zero_init, floats_te
 if is_torch_available():
     import torch
 
-    from transformers import Speech2TextForConditionalGeneration, Speech2TextModel, Speech2TextProcessor
+    from transformers import (
+        Speech2TextConfig,
+        Speech2TextForConditionalGeneration,
+        Speech2TextModel,
+        Speech2TextProcessor,
+    )
     from transformers.models.speech_to_text.modeling_speech_to_text import Speech2TextDecoder, Speech2TextEncoder
 
 
@@ -137,17 +142,7 @@ class Speech2TextModelTester:
         attention_mask = torch.ones([self.batch_size, self.seq_length], dtype=torch.long, device=torch_device)
         decoder_input_ids = ids_tensor([self.batch_size, self.seq_length], self.vocab_size).clamp(2)
 
-        config = self.get_config()
-        inputs_dict = prepare_speech_to_text_inputs_dict(
-            config,
-            input_features=input_features,
-            decoder_input_ids=decoder_input_ids,
-            attention_mask=attention_mask,
-        )
-        return config, inputs_dict
-
-    def get_config(self):
-        return Speech2TextConfig(
+        config = Speech2TextConfig(
             vocab_size=self.vocab_size,
             d_model=self.hidden_size,
             encoder_layers=self.num_hidden_layers,
@@ -170,6 +165,13 @@ class Speech2TextModelTester:
             bos_token_id=self.bos_token_id,
             pad_token_id=self.pad_token_id,
         )
+        inputs_dict = prepare_speech_to_text_inputs_dict(
+            config,
+            input_features=input_features,
+            decoder_input_ids=decoder_input_ids,
+            attention_mask=attention_mask,
+        )
+        return config, inputs_dict
 
     def prepare_config_and_inputs_for_common(self):
         config, inputs_dict = self.prepare_config_and_inputs()
@@ -241,15 +243,11 @@ class Speech2TextModelTester:
             decoder.save_pretrained(tmpdirname)
             decoder = Speech2TextDecoder.from_pretrained(tmpdirname).to(torch_device)
 
-        encoder_attention_mask = encoder._get_feature_vector_attention_mask(
-            encoder_last_hidden_state.shape[1], inputs_dict["attention_mask"]
-        )
-
         last_hidden_state_2 = decoder(
             input_ids=inputs_dict["decoder_input_ids"],
             attention_mask=inputs_dict["decoder_attention_mask"],
             encoder_hidden_states=encoder_last_hidden_state,
-            encoder_attention_mask=encoder_attention_mask,
+            encoder_attention_mask=inputs_dict["attention_mask"],
         )[0]
 
         self.parent.assertTrue((last_hidden_state_2 - last_hidden_state).abs().max().item() < 1e-3)
@@ -292,7 +290,6 @@ class Speech2TextModelTest(ModelTesterMixin, GenerationTesterMixin, unittest.Tes
         config_and_inputs = self.model_tester.prepare_config_and_inputs_for_common()
         self.model_tester.check_encoder_decoder_model_standalone(*config_and_inputs)
 
-    # not implemented currently
     def test_inputs_embeds(self):
         pass
 
@@ -357,7 +354,7 @@ class Speech2TextModelTest(ModelTesterMixin, GenerationTesterMixin, unittest.Tes
             else:
                 seq_length = self.model_tester.seq_length
 
-            subsampled_seq_length = model._get_feat_extract_output_lengths(seq_length)
+            subsampled_seq_length = model._get_subsampled_output_lengths(seq_length)
 
             self.assertListEqual(
                 list(hidden_states[0].shape[-2:]),
@@ -407,8 +404,8 @@ class Speech2TextModelTest(ModelTesterMixin, GenerationTesterMixin, unittest.Tes
             model.to(torch_device)
             model.eval()
 
-            subsampled_encoder_seq_length = model._get_feat_extract_output_lengths(encoder_seq_length)
-            subsampled_encoder_key_length = model._get_feat_extract_output_lengths(encoder_key_length)
+            subsampled_encoder_seq_length = model._get_subsampled_output_lengths(encoder_seq_length)
+            subsampled_encoder_key_length = model._get_subsampled_output_lengths(encoder_key_length)
 
             with torch.no_grad():
                 outputs = model(**self._prepare_for_class(inputs_dict, model_class))
@@ -715,11 +712,18 @@ class Speech2TextModelIntegrationTests(unittest.TestCase):
     def _load_datasamples(self, num_samples):
         from datasets import load_dataset
 
-        ds = load_dataset("hf-internal-testing/librispeech_asr_dummy", "clean", split="validation")
-        # automatic decoding with librispeech
-        speech_samples = ds.sort("id").select(range(num_samples))[:num_samples]["audio"]
+        import soundfile as sf
 
-        return [x["array"] for x in speech_samples]
+        # map files to raw
+        def map_to_array(batch):
+            speech, _ = sf.read(batch["file"])
+            batch["speech"] = speech
+            return batch
+
+        ds = load_dataset("patrickvonplaten/librispeech_asr_dummy", "clean", split="validation")
+        ds = ds.select(range(num_samples)).map(map_to_array)
+
+        return ds["speech"][:num_samples]
 
     def test_generation_librispeech(self):
         model = Speech2TextForConditionalGeneration.from_pretrained("facebook/s2t-small-librispeech-asr")
@@ -733,9 +737,7 @@ class Speech2TextModelIntegrationTests(unittest.TestCase):
         generated_ids = model.generate(input_features)
         generated_transcript = processor.batch_decode(generated_ids, skip_special_tokens=True)
 
-        EXPECTED_TRANSCRIPTIONS = [
-            "mister quilter is the apostle of the middle classes and we are glad to welcome his gospel"
-        ]
+        EXPECTED_TRANSCRIPTIONS = ["a man said to the universe sir i exist"]
         self.assertListEqual(generated_transcript, EXPECTED_TRANSCRIPTIONS)
 
     def test_generation_librispeech_batched(self):
@@ -754,10 +756,10 @@ class Speech2TextModelIntegrationTests(unittest.TestCase):
         generated_transcripts = processor.batch_decode(generated_ids, skip_special_tokens=True)
 
         EXPECTED_TRANSCRIPTIONS = [
-            "mister quilter is the apostle of the middle classes and we are glad to welcome his gospel",
-            "nor is mister cultar's manner less interesting than his matter",
-            "he tells us that at this festive season of the year with christmas and roast beef looming before us similes drawn from eating and its results occur most readily to the mind",
-            "he has grave doubts whether sir frederick leyton's work is really greek after all and can discover in it but little of rocky ithaca",
+            "a man said to the universe sir i exist",
+            "sweat covered brion's body trickling into the titleing cloth that was the only garment he wore",
+            "the cut on his chest still dripping blood the ache of his overstrained eyes even the soaring arena around him with the thousands of spectators were trivialities not worth thinking about",
+            "his instant of panic was followed by a small sharp blow high on his chest",
         ]
 
         self.assertListEqual(generated_transcripts, EXPECTED_TRANSCRIPTIONS)

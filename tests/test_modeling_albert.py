@@ -16,7 +16,7 @@
 
 import unittest
 
-from transformers import AlbertConfig, is_torch_available
+from transformers import is_torch_available
 from transformers.models.auto import get_values
 from transformers.testing_utils import require_torch, slow, torch_device
 
@@ -29,6 +29,7 @@ if is_torch_available():
 
     from transformers import (
         MODEL_FOR_PRETRAINING_MAPPING,
+        AlbertConfig,
         AlbertForMaskedLM,
         AlbertForMultipleChoice,
         AlbertForPreTraining,
@@ -89,12 +90,7 @@ class AlbertModelTester:
             token_labels = ids_tensor([self.batch_size, self.seq_length], self.num_labels)
             choice_labels = ids_tensor([self.batch_size], self.num_choices)
 
-        config = self.get_config()
-
-        return config, input_ids, token_type_ids, input_mask, sequence_labels, token_labels, choice_labels
-
-    def get_config(self):
-        return AlbertConfig(
+        config = AlbertConfig(
             vocab_size=self.vocab_size,
             hidden_size=self.hidden_size,
             num_hidden_layers=self.num_hidden_layers,
@@ -108,6 +104,8 @@ class AlbertModelTester:
             initializer_range=self.initializer_range,
             num_hidden_groups=self.num_hidden_groups,
         )
+
+        return config, input_ids, token_type_ids, input_mask, sequence_labels, token_labels, choice_labels
 
     def create_and_check_model(
         self, config, input_ids, token_type_ids, input_mask, sequence_labels, token_labels, choice_labels
@@ -231,8 +229,8 @@ class AlbertModelTest(ModelTesterMixin, unittest.TestCase):
         if is_torch_available()
         else ()
     )
-    fx_ready_model_classes = all_model_classes
-    fx_dynamic_ready_model_classes = all_model_classes
+
+    test_sequence_classification_problem_types = True
 
     # special case for ForPreTraining model
     def _prepare_for_class(self, inputs_dict, model_class, return_labels=False):

@@ -21,6 +21,7 @@ from dataclasses import dataclass
 from typing import Optional, Tuple
 
 import torch
+import torch.nn.functional as F
 import torch.utils.checkpoint
 from torch import Tensor, nn
 from torch.nn import LayerNorm
@@ -42,7 +43,6 @@ logger = logging.get_logger(__name__)
 
 _CONFIG_FOR_DOC = "ProphenetConfig"
 _TOKENIZER_FOR_DOC = "ProphetNetTokenizer"
-_CHECKPOINT_FOR_DOC = "microsoft/prophetnet-large-uncased"
 
 PROPHETNET_PRETRAINED_MODEL_ARCHIVE_LIST = [
     "microsoft/prophetnet-large-uncased",
@@ -183,9 +183,9 @@ PROPHETNET_STANDALONE_INPUTS_DOCSTRING = r"""
 
 def softmax(hidden_state, dim, onnx_trace=False):
     if onnx_trace:
-        return nn.functional.softmax(hidden_state.float(), dim=dim)
+        return F.softmax(hidden_state.float(), dim=dim)
     else:
-        return nn.functional.softmax(hidden_state, dim=dim, dtype=torch.float32)
+        return F.softmax(hidden_state, dim=dim, dtype=torch.float32)
 
 
 def ngram_attention_bias(sequence_length, ngram, device, dtype):
@@ -547,7 +547,6 @@ class ProphetNetDecoderLMOutput(ModelOutput):
 class ProphetNetPreTrainedModel(PreTrainedModel):
     config_class = ProphetNetConfig
     base_model_prefix = "prophetnet"
-    supports_gradient_checkpointing = True
 
     def _init_weights(self, module):
         if isinstance(module, nn.Linear):
@@ -558,10 +557,6 @@ class ProphetNetPreTrainedModel(PreTrainedModel):
             module.weight.data.normal_(mean=0.0, std=self.config.init_std)
             if module.padding_idx is not None:
                 module.weight.data[module.padding_idx].zero_()
-
-    def _set_gradient_checkpointing(self, module, value=False):
-        if isinstance(module, (ProphetNetDecoder, ProphetNetEncoder)):
-            module.gradient_checkpointing = value
 
     def _shift_right(self, input_ids):
         decoder_start_token_id = self.config.decoder_start_token_id
@@ -737,7 +732,7 @@ class ProphetNetAttention(nn.Module):
         else:
             attn_weights_reshaped = None
 
-        attn_weights = nn.functional.softmax(attn_weights, dim=-1)
+        attn_weights = F.softmax(attn_weights, dim=-1)
 
         if layer_head_mask is not None:
             assert layer_head_mask.size() == (
@@ -751,7 +746,7 @@ class ProphetNetAttention(nn.Module):
             # apply head_mask also on attn_weights_reshaped which is used for n-gram attention inside the model
             attn_weights_reshaped = layer_head_mask.view(1, -1, 1, 1) * attn_weights_reshaped
 
-        attn_probs = nn.functional.dropout(
+        attn_probs = F.dropout(
             attn_weights,
             p=self.attention_dropout,
             training=self.training,
@@ -772,7 +767,7 @@ class ProphetNetAttention(nn.Module):
 
         attn_output = self.out_proj(attn_output)
 
-        attn_output = nn.functional.dropout(attn_output, p=self.dropout, training=self.training)
+        attn_output = F.dropout(attn_output, p=self.dropout, training=self.training)
         return attn_output, attn_weights_reshaped, past_key_value
 
 
@@ -793,9 +788,9 @@ class ProphetNetFeedForward(nn.Module):
         hidden_states = self.intermediate(hidden_states)
         hidden_states = self.activation_fn(hidden_states)
 
-        hidden_states = nn.functional.dropout(hidden_states, p=self.activation_dropout, training=self.training)
+        hidden_states = F.dropout(hidden_states, p=self.activation_dropout, training=self.training)
         hidden_states = self.output(hidden_states)
-        hidden_states = nn.functional.dropout(hidden_states, p=self.dropout, training=self.training)
+        hidden_states = F.dropout(hidden_states, p=self.dropout, training=self.training)
         return hidden_states
 
 
@@ -929,7 +924,7 @@ class ProphetNetNgramSelfAttention(nn.Module):
             )
             main_attn_probs = main_attn_probs.view(batch_size * self.num_attn_heads, -1, sequence_length)
 
-        main_attn_probs = nn.functional.dropout(main_attn_probs, p=self.attention_dropout, training=self.training)
+        main_attn_probs = F.dropout(main_attn_probs, p=self.attention_dropout, training=self.training)
         # project to attn_output
         main_attn_output = torch.bmm(main_attn_probs, main_value_states)
 
@@ -994,9 +989,7 @@ class ProphetNetNgramSelfAttention(nn.Module):
                 self.ngram, batch_size * self.num_attn_heads, sequence_length, 2 * sequence_length
             )
 
-        predict_attn_probs = nn.functional.dropout(
-            predict_attn_probs, p=self.attention_dropout, training=self.training
-        )
+        predict_attn_probs = F.dropout(predict_attn_probs, p=self.attention_dropout, training=self.training)
         # project to attention output
         # [ngram, B*head, T, c]
         predict_attn_output = torch.einsum("nbts,nbsc->nbtc", (predict_attn_probs, predict_value_states))
@@ -1019,7 +1012,7 @@ class ProphetNetNgramSelfAttention(nn.Module):
             self.ngram, batch_size, self.num_attn_heads, sequence_length, -1
         ).transpose(0, 1)
 
-        attn_output = nn.functional.dropout(attn_output, p=self.dropout, training=self.training)
+        attn_output = F.dropout(attn_output, p=self.dropout, training=self.training)
 
         return attn_output, main_attn_probs, predict_attn_probs, past_key_value
 
@@ -1267,7 +1260,6 @@ class ProphetNetEncoder(ProphetNetPreTrainedModel):
         self.layers = nn.ModuleList([ProphetNetEncoderLayer(config) for _ in range(config.num_encoder_layers)])
 
         self.init_weights()
-        self.gradient_checkpointing = False
 
     def get_input_embeddings(self):
         return self.word_embeddings
@@ -1329,7 +1321,7 @@ class ProphetNetEncoder(ProphetNetPreTrainedModel):
 
         hidden_states = inputs_embeds + position_embeddings
         hidden_states = self.embeddings_layer_norm(hidden_states)
-        hidden_states = nn.functional.dropout(hidden_states, p=self.config.dropout, training=self.training)
+        hidden_states = F.dropout(hidden_states, p=self.config.dropout, training=self.training)
 
         encoder_hidden_states = () if output_hidden_states else None
         all_attentions = () if output_attentions else None
@@ -1343,7 +1335,7 @@ class ProphetNetEncoder(ProphetNetPreTrainedModel):
             if output_hidden_states:
                 encoder_hidden_states = encoder_hidden_states + (hidden_states,)
 
-            if self.gradient_checkpointing and self.training:
+            if getattr(self.config, "gradient_checkpointing", False) and self.training:
 
                 def create_custom_forward(module):
                     def custom_forward(*inputs):
@@ -1412,7 +1404,6 @@ class ProphetNetDecoder(ProphetNetPreTrainedModel):
         self.embeddings_layer_norm = LayerNorm(config.hidden_size)
 
         self.init_weights()
-        self.gradient_checkpointing = False
 
     def get_input_embeddings(self):
         return self.word_embeddings
@@ -1547,7 +1538,7 @@ class ProphetNetDecoder(ProphetNetPreTrainedModel):
         if self.embeddings_layer_norm:
             hidden_states = self.embeddings_layer_norm(hidden_states)
 
-        hidden_states = nn.functional.dropout(hidden_states, p=self.dropout, training=self.training)
+        hidden_states = F.dropout(hidden_states, p=self.dropout, training=self.training)
 
         # init attentions, hidden_states and cache with empty tuples
         all_main_stream_hidden_states = () if output_hidden_states else None
@@ -1573,11 +1564,12 @@ class ProphetNetDecoder(ProphetNetPreTrainedModel):
 
             past_key_value = past_key_values[idx] if past_key_values is not None else None
 
-            if self.gradient_checkpointing and self.training:
+            if getattr(self.config, "gradient_checkpointing", False) and self.training:
 
                 if use_cache:
                     logger.warning(
-                        "`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`..."
+                        "`use_cache=True` is incompatible with `config.gradient_checkpointing=True`. Setting "
+                        "`use_cache=False`..."
                     )
                     use_cache = False
 
@@ -1694,9 +1686,7 @@ class ProphetNetDecoder(ProphetNetPreTrainedModel):
         batch_size, seq_length = hidden_states.shape[:2]
 
         # get causal mask
-        causal_mask = torch.full(
-            (seq_length, seq_length), -float("inf"), dtype=hidden_states.dtype, device=hidden_states.device
-        )
+        causal_mask = hidden_states.new(seq_length, seq_length).float().fill_(-float("inf"))
         causal_mask = torch.triu(causal_mask, 1)
         extended_causal_mask = causal_mask[:seq_length, :seq_length][None, :, :].expand(
             (batch_size,) + causal_mask.shape
@@ -1818,7 +1808,8 @@ class ProphetNetModel(ProphetNetPreTrainedModel):
             >>> last_hidden_states = outputs.last_hidden_state  # main stream hidden states
             >>> last_hidden_states_ngram = outputs.last_hidden_state_ngram  # predict hidden states
         """
-        use_cache = use_cache if use_cache is not None else self.config.use_cache
+
+        use_cache == use_cache if use_cache is not None else self.config.use_cache
         output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
         output_hidden_states = (
             output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
@@ -2004,14 +1995,13 @@ class ProphetNetForConditionalGeneration(ProphetNetPreTrainedModel):
                 break
             expend_targets[i, :, :] = labels
 
-        logits = logits.transpose(0, 1).contiguous()
-        lprobs = nn.functional.log_softmax(
+        lprobs = F.log_softmax(
             logits.view(-1, logits.size(-1)),
             dim=-1,
             dtype=torch.float32,
         )
 
-        loss = nn.functional.nll_loss(lprobs, expend_targets.view(-1), reduction="mean")
+        loss = F.nll_loss(lprobs, expend_targets.view(-1), reduction="mean")
 
         if self.config.eps > 0.0:
             smooth_loss = -lprobs.sum(dim=-1, keepdim=True)
@@ -2030,8 +2020,6 @@ class ProphetNetForConditionalGeneration(ProphetNetPreTrainedModel):
         past=None,
         attention_mask=None,
         head_mask=None,
-        decoder_head_mask=None,
-        cross_attn_head_mask=None,
         use_cache=None,
         encoder_outputs=None,
         **kwargs,
@@ -2048,8 +2036,6 @@ class ProphetNetForConditionalGeneration(ProphetNetPreTrainedModel):
             "decoder_input_ids": decoder_input_ids,
             "attention_mask": attention_mask,
             "head_mask": head_mask,
-            "decoder_head_mask": decoder_head_mask,
-            "cross_attn_head_mask": cross_attn_head_mask,
             "use_cache": use_cache,
         }
 
@@ -2249,14 +2235,13 @@ class ProphetNetForCausalLM(ProphetNetPreTrainedModel):
                 break
             expend_targets[i, :, :] = labels
 
-        logits = logits.transpose(0, 1).contiguous()
-        lprobs = nn.functional.log_softmax(
+        lprobs = F.log_softmax(
             logits.view(-1, logits.size(-1)),
             dim=-1,
             dtype=torch.float32,
         )
 
-        loss = nn.functional.nll_loss(lprobs, expend_targets.view(-1), reduction="mean")
+        loss = F.nll_loss(lprobs, expend_targets.view(-1), reduction="mean")
 
         if self.config.eps > 0.0:
             smooth_loss = -lprobs.sum(dim=-1, keepdim=True)

@@ -63,6 +63,7 @@ TensorFlow custom layers
     :members: call
 
 .. autoclass:: transformers.modeling_tf_utils.TFSequenceSummary
+    :members: call
 
 
 TensorFlow loss functions

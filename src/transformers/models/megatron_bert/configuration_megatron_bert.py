@@ -65,6 +65,8 @@ class MegatronBertConfig(PretrainedConfig):
             The standard deviation of the truncated_normal_initializer for initializing all weight matrices.
         layer_norm_eps (:obj:`float`, `optional`, defaults to 1e-12):
             The epsilon used by the layer normalization layers.
+        gradient_checkpointing (:obj:`bool`, `optional`, defaults to :obj:`False`):
+            If True, use gradient checkpointing to save memory at the expense of slower backward pass.
         position_embedding_type (:obj:`str`, `optional`, defaults to :obj:`"absolute"`):
             Type of position embedding. Choose one of :obj:`"absolute"`, :obj:`"relative_key"`,
             :obj:`"relative_key_query"`. For positional embeddings use :obj:`"absolute"`. For more information on
@@ -106,6 +108,7 @@ class MegatronBertConfig(PretrainedConfig):
         initializer_range=0.02,
         layer_norm_eps=1e-12,
         pad_token_id=0,
+        gradient_checkpointing=False,
         position_embedding_type="absolute",
         use_cache=True,
         **kwargs
@@ -124,5 +127,6 @@ class MegatronBertConfig(PretrainedConfig):
         self.type_vocab_size = type_vocab_size
         self.initializer_range = initializer_range
         self.layer_norm_eps = layer_norm_eps
+        self.gradient_checkpointing = gradient_checkpointing
         self.position_embedding_type = position_embedding_type
         self.use_cache = use_cache

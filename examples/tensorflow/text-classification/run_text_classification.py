@@ -205,6 +205,7 @@ class ModelArguments:
             "with private models)."
         },
     )
+    tpu: Optional[str] = field(default=None, metadata={"help": "Name of the TPU resource to use, if available"})
 
 
 # endregion
@@ -247,7 +248,7 @@ def main():
 
     # region Logging
     logging.basicConfig(
-        format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
+        format="%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
         datefmt="%m/%d/%Y %H:%M:%S",
         handlers=[logging.StreamHandler(sys.stdout)],
     )
@@ -438,8 +439,10 @@ def main():
         model.compile(optimizer=optimizer, loss=loss_fn, metrics=metrics)
         # endregion
 
-        # region Convert data to a tf.data.Dataset
+        # region Convert data to TF format
 
+        # Convert data to a tf.keras.utils.Sequence object for training if we're not using a TPU
+        # For TPU, convert to a tf.data.Dataset
         tf_data = dict()
         max_samples = {
             "train": data_args.max_train_samples,

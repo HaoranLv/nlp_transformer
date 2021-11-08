@@ -24,11 +24,10 @@ from zipfile import ZipFile
 
 import numpy as np
 import torch
-from torch import nn
 from tqdm import tqdm
 
-from huggingface_hub.hf_api import list_models
 from transformers import MarianConfig, MarianMTModel, MarianTokenizer
+from transformers.hf_api import HfApi
 
 
 def remove_suffix(text: str, suffix: str):
@@ -54,7 +53,7 @@ def convert_encoder_layer(opus_dict, layer_prefix: str, converter: dict):
     return sd
 
 
-def load_layers_(layer_lst: nn.ModuleList, opus_state: dict, converter, is_decoder=False):
+def load_layers_(layer_lst: torch.nn.ModuleList, opus_state: dict, converter, is_decoder=False):
     for i, layer in enumerate(layer_lst):
         layer_tag = f"decoder_l{i + 1}_" if is_decoder else f"encoder_l{i + 1}_"
         sd = convert_encoder_layer(opus_state, layer_tag, converter)
@@ -64,7 +63,8 @@ def load_layers_(layer_lst: nn.ModuleList, opus_state: dict, converter, is_decod
 def find_pretrained_model(src_lang: str, tgt_lang: str) -> List[str]:
     """Find models that can accept src_lang as input and return tgt_lang as output."""
     prefix = "Helsinki-NLP/opus-mt-"
-    model_list = list_models()
+    api = HfApi()
+    model_list = api.model_list()
     model_ids = [x.modelId for x in model_list if x.modelId.startswith("Helsinki-NLP")]
     src_and_targ = [
         remove_prefix(m, prefix).lower().split("-") for m in model_ids if "+" not in m
@@ -111,8 +111,7 @@ def load_config_from_state_dict(opus_dict):
 
 def find_model_file(dest_dir):  # this one better
     model_files = list(Path(dest_dir).glob("*.npz"))
-    if len(model_files) != 1:
-        raise ValueError(f"Found more than one model file: {model_files}")
+    assert len(model_files) == 1, model_files
     model_file = model_files[0]
     return model_file
 
@@ -218,11 +217,9 @@ def write_model_card(
 
     hf_model_name = remove_prefix(hf_model_name, ORG_NAME)
     opus_name: str = convert_hf_name_to_opus_name(hf_model_name)
-    if repo_root not in ("OPUS-MT-train", "Tatoeba-Challenge"):
-        raise ValueError(f"Repos root is {repo_root}. Expected either OPUS-MT-train or Tatoeba-Challenge")
+    assert repo_root in ("OPUS-MT-train", "Tatoeba-Challenge")
     opus_readme_path = Path(repo_root).joinpath("models", opus_name, "README.md")
-    if not (opus_readme_path.exists()):
-        raise ValueError(f"Readme file {opus_readme_path} not found")
+    assert opus_readme_path.exists(), f"Readme file {opus_readme_path} not found"
 
     opus_src, opus_tgt = [x.split("+") for x in opus_name.split("-")]
 
@@ -323,8 +320,9 @@ def fetch_test_set(test_set_url):
     src = lmap(str.strip, lns[::4])
     gold = lmap(str.strip, lns[1::4])
     mar_model = lmap(str.strip, lns[2::4])
-    if not (len(gold) == len(mar_model) == len(src)):
-        raise ValueError(f"Gold, marian and source lengths {len(gold)}, {len(mar_model)}, {len(src)} mismatched")
+    assert (
+        len(gold) == len(mar_model) == len(src)
+    ), f"Gold, marian and source lengths {len(gold)}, {len(mar_model)}, {len(src)} mismatched"
     os.remove(fname)
     return src, mar_model, gold
 
@@ -392,8 +390,7 @@ def add_special_tokens_to_vocab(model_dir: Path) -> None:
 
 def check_equal(marian_cfg, k1, k2):
     v1, v2 = marian_cfg[k1], marian_cfg[k2]
-    if v1 != v2:
-        raise ValueError(f"hparams {k1},{k2} differ: {v1} != {v2}")
+    assert v1 == v2, f"hparams {k1},{k2} differ: {v1} != {v2}"
 
 
 def check_marian_cfg_assumptions(marian_cfg):
@@ -415,8 +412,7 @@ def check_marian_cfg_assumptions(marian_cfg):
     }
     for k, v in assumed_settings.items():
         actual = marian_cfg[k]
-        if actual != v:
-            raise ValueError(f"Unexpected config value for {k} expected {v} got {actual}")
+        assert actual == v, f"Unexpected config value for {k} expected {v} got {actual}"
     check_equal(marian_cfg, "transformer-ffn-activation", "transformer-aan-activation")
     check_equal(marian_cfg, "transformer-ffn-depth", "transformer-aan-depth")
     check_equal(marian_cfg, "transformer-dim-ffn", "transformer-dim-aan")
@@ -459,24 +455,22 @@ class OpusState:
         npz_path = find_model_file(source_dir)
         self.state_dict = np.load(npz_path)
         cfg = load_config_from_state_dict(self.state_dict)
-        if cfg["dim-vocabs"][0] != cfg["dim-vocabs"][1]:
-            raise ValueError
-        if "Wpos" in self.state_dict:
-            raise ValueError("Wpos key in state dictionary")
+        assert cfg["dim-vocabs"][0] == cfg["dim-vocabs"][1]
+        assert "Wpos" not in self.state_dict, "Wpos key in state dictionary"
         self.state_dict = dict(self.state_dict)
         self.wemb, self.final_bias = add_emb_entries(self.state_dict["Wemb"], self.state_dict[BIAS_KEY], 1)
         self.pad_token_id = self.wemb.shape[0] - 1
         cfg["vocab_size"] = self.pad_token_id + 1
         # self.state_dict['Wemb'].sha
         self.state_keys = list(self.state_dict.keys())
-        if "Wtype" in self.state_dict:
-            raise ValueError("Wtype key in state dictionary")
+        assert "Wtype" not in self.state_dict, "Wtype key in state dictionary"
         self._check_layer_entries()
         self.source_dir = source_dir
         self.cfg = cfg
         hidden_size, intermediate_shape = self.state_dict["encoder_l1_ffn_W1"].shape
-        if hidden_size != 512 or cfg["dim-emb"] != 512:
-            raise ValueError(f"Hidden size {hidden_size} and configured size {cfg['dim_emb']} mismatched or not 512")
+        assert (
+            hidden_size == cfg["dim-emb"] == 512
+        ), f"Hidden size {hidden_size} and configured size {cfg['dim_emb']} mismatched or not 512"
 
         # Process decoder.yml
         decoder_yml = cast_marian_config(load_yaml(source_dir / "decoder.yml"))
@@ -537,12 +531,10 @@ class OpusState:
     def load_marian_model(self) -> MarianMTModel:
         state_dict, cfg = self.state_dict, self.hf_config
 
-        if not cfg.static_position_embeddings:
-            raise ValueError("config.static_position_embeddings should be True")
+        assert cfg.static_position_embeddings, "config.static_position_embeddings should be True"
         model = MarianMTModel(cfg)
 
-        if "hidden_size" in cfg.to_dict():
-            raise ValueError("hidden_size is in config")
+        assert "hidden_size" not in cfg.to_dict()
         load_layers_(
             model.model.encoder.layers,
             state_dict,
@@ -551,8 +543,8 @@ class OpusState:
         load_layers_(model.model.decoder.layers, state_dict, BART_CONVERTER, is_decoder=True)
 
         # handle tensors not associated with layers
-        wemb_tensor = nn.Parameter(torch.FloatTensor(self.wemb))
-        bias_tensor = nn.Parameter(torch.FloatTensor(self.final_bias))
+        wemb_tensor = torch.nn.Parameter(torch.FloatTensor(self.wemb))
+        bias_tensor = torch.nn.Parameter(torch.FloatTensor(self.final_bias))
         model.model.shared.weight = wemb_tensor
         model.model.encoder.embed_tokens = model.model.decoder.embed_tokens = model.model.shared
 
@@ -565,14 +557,13 @@ class OpusState:
             model.model.decoder.embed_positions.weight = wpos_tensor
 
         if cfg.normalize_embedding:
-            if not ("encoder_emb_ln_scale_pre" in state_dict):
-                raise ValueError("encoder_emb_ln_scale_pre is not in state dictionary")
+            assert "encoder_emb_ln_scale_pre" in state_dict
             raise NotImplementedError("Need to convert layernorm_embedding")
 
-        if self.extra_keys:
-            raise ValueError(f"Failed to convert {self.extra_keys}")
-        if model.model.shared.padding_idx != self.pad_token_id:
-            raise ValueError(f"Padding tokens {model.model.shared.padding_idx} and {self.pad_token_id} mismatched")
+        assert not self.extra_keys, f"Failed to convert {self.extra_keys}"
+        assert (
+            model.model.shared.padding_idx == self.pad_token_id
+        ), f"Padding tokens {model.model.shared.padding_idx} and {self.pad_token_id} mismatched"
         return model
 
 
@@ -596,10 +587,9 @@ def convert(source_dir: Path, dest_dir):
     tokenizer.save_pretrained(dest_dir)
 
     opus_state = OpusState(source_dir)
-    if opus_state.cfg["vocab_size"] != len(tokenizer.encoder):
-        raise ValueError(
-            f"Original vocab size {opus_state.cfg['vocab_size']} and new vocab size {len(tokenizer.encoder)} mismatched"
-        )
+    assert opus_state.cfg["vocab_size"] == len(
+        tokenizer.encoder
+    ), f"Original vocab size {opus_state.cfg['vocab_size']} and new vocab size {len(tokenizer.encoder)} mismatched"
     # save_json(opus_state.cfg, dest_dir / "marian_original_config.json")
     # ^^ Uncomment to save human readable marian config for debugging
 
@@ -637,7 +627,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     source_dir = Path(args.src)
-    if not source_dir.exists():
-        raise ValueError(f"Source directory {source_dir} not found")
+    assert source_dir.exists(), f"Source directory {source_dir} not found"
     dest_dir = f"converted-{source_dir.name}" if args.dest is None else args.dest
     convert(source_dir, dest_dir)

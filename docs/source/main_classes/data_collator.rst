@@ -18,7 +18,7 @@ the same type as the elements of :obj:`train_dataset` or :obj:`eval_dataset`.
 
 To be able to build batches, data collators may apply some processing (like padding). Some of them (like
 :class:`~transformers.DataCollatorForLanguageModeling`) also apply some random data augmentation (like random masking)
-on the formed batch.
+oin the formed batch.
 
 Examples of use can be found in the :doc:`example scripts <../examples>` or :doc:`example notebooks <../notebooks>`.
 
@@ -54,18 +54,18 @@ DataCollatorForLanguageModeling
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: transformers.data.data_collator.DataCollatorForLanguageModeling
-    :members: numpy_mask_tokens, tf_mask_tokens, torch_mask_tokens
+    :members: mask_tokens
 
 
 DataCollatorForWholeWordMask
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: transformers.data.data_collator.DataCollatorForWholeWordMask
-    :members: numpy_mask_tokens, tf_mask_tokens, torch_mask_tokens
+    :members: mask_tokens
 
 
 DataCollatorForPermutationLanguageModeling
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: transformers.data.data_collator.DataCollatorForPermutationLanguageModeling
-    :members: numpy_mask_tokens, tf_mask_tokens, torch_mask_tokens
+    :members: mask_tokens

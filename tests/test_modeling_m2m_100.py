@@ -19,7 +19,7 @@ import copy
 import tempfile
 import unittest
 
-from transformers import M2M100Config, is_torch_available
+from transformers import is_torch_available
 from transformers.file_utils import cached_property
 from transformers.testing_utils import require_sentencepiece, require_tokenizers, require_torch, slow, torch_device
 
@@ -31,7 +31,7 @@ from .test_modeling_common import ModelTesterMixin, ids_tensor
 if is_torch_available():
     import torch
 
-    from transformers import M2M100ForConditionalGeneration, M2M100Model, M2M100Tokenizer
+    from transformers import M2M100Config, M2M100ForConditionalGeneration, M2M100Model, M2M100Tokenizer
     from transformers.models.m2m_100.modeling_m2m_100 import M2M100Decoder, M2M100Encoder
 
 
@@ -66,6 +66,7 @@ def prepare_m2m_100_inputs_dict(
     }
 
 
+@require_torch
 class M2M100ModelTester:
     def __init__(
         self,
@@ -124,12 +125,7 @@ class M2M100ModelTester:
         input_ids = input_ids.clamp(self.pad_token_id + 1)
         decoder_input_ids = decoder_input_ids.clamp(self.pad_token_id + 1)
 
-        config = self.get_config()
-        inputs_dict = prepare_m2m_100_inputs_dict(config, input_ids, decoder_input_ids)
-        return config, inputs_dict
-
-    def get_config(self):
-        return M2M100Config(
+        config = M2M100Config(
             vocab_size=self.vocab_size,
             d_model=self.hidden_size,
             encoder_layers=self.num_hidden_layers,
@@ -147,6 +143,8 @@ class M2M100ModelTester:
             bos_token_id=self.bos_token_id,
             pad_token_id=self.pad_token_id,
         )
+        inputs_dict = prepare_m2m_100_inputs_dict(config, input_ids, decoder_input_ids)
+        return config, inputs_dict
 
     def prepare_config_and_inputs_for_common(self):
         config, inputs_dict = self.prepare_config_and_inputs()

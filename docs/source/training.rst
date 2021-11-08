@@ -27,13 +27,7 @@ negative. For examples of other tasks, refer to the :ref:`additional-resources` 
 Preparing the datasets
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. raw:: html
-
-   <iframe width="560" height="315" src="https://www.youtube.com/embed/_BZearw7f0w" title="YouTube video player"
-   frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope;
-   picture-in-picture" allowfullscreen></iframe>
-
-We will use the `🤗 Datasets <https://github.com/huggingface/datasets/>`__ library to download and preprocess the IMDB
+We will use the `🤗 Datasets <https:/github.com/huggingface/datasets/>`__ library to download and preprocess the IMDB
 datasets. We will go over this part pretty quickly. Since the focus of this tutorial is on training, you should refer
 to the 🤗 Datasets `documentation <https://huggingface.co/docs/datasets/>`__ or the :doc:`preprocessing` tutorial for
 more information.
@@ -101,12 +95,6 @@ them by their `full` equivalent to train or evaluate on the full dataset.
 Fine-tuning in PyTorch with the Trainer API
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. raw:: html
-
-   <iframe width="560" height="315" src="https://www.youtube.com/embed/nvBXf7s7vTI" title="YouTube video player"
-   frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope;
-   picture-in-picture" allowfullscreen></iframe>
-
 Since PyTorch does not provide a training loop, the 🤗 Transformers library provides a :class:`~transformers.Trainer`
 API that is optimized for 🤗 Transformers models, with a wide range of training options and with built-in features like
 logging, gradient accumulation, and mixed precision.
@@ -152,7 +140,7 @@ To fine-tune our model, we just need to call
     trainer.train()
 
 which will start a training that you can follow with a progress bar, which should take a couple of minutes to complete
-(as long as you have access to a GPU). It won't actually tell you anything useful about how well (or badly) your model
+(as long as you hav access to a GPU). It won't actually tell you anything useful about how well (or badly) your model
 is performing however as by default, there is no evaluation during training, and we didn't tell the
 :class:`~transformers.Trainer` to compute any metrics. Let's have a look on how to do that now!
 
@@ -212,12 +200,6 @@ See the documentation of :class:`~transformers.TrainingArguments` for more optio
 Fine-tuning with Keras
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. raw:: html
-
-   <iframe width="560" height="315" src="https://www.youtube.com/embed/rnTGBy2ax1c" title="YouTube video player"
-   frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope;
-   picture-in-picture" allowfullscreen></iframe>
-
 Models can also be trained natively in TensorFlow using the Keras API. First, let's define our model:
 
 .. code-block:: python
@@ -240,11 +222,11 @@ Then we convert everything in big tensors and use the :obj:`tf.data.Dataset.from
 
 .. code-block:: python
 
-    train_features = {x: tf_train_dataset[x] for x in tokenizer.model_input_names}
+    train_features = {x: tf_train_dataset[x].to_tensor() for x in tokenizer.model_input_names}
     train_tf_dataset = tf.data.Dataset.from_tensor_slices((train_features, tf_train_dataset["label"]))
     train_tf_dataset = train_tf_dataset.shuffle(len(tf_train_dataset)).batch(8)
 
-    eval_features = {x: tf_eval_dataset[x] for x in tokenizer.model_input_names}
+    eval_features = {x: tf_eval_dataset[x].to_tensor() for x in tokenizer.model_input_names}
     eval_tf_dataset = tf.data.Dataset.from_tensor_slices((eval_features, tf_eval_dataset["label"]))
     eval_tf_dataset = eval_tf_dataset.batch(8)
 
@@ -275,13 +257,7 @@ as a PyTorch model (or vice-versa):
 Fine-tuning in native PyTorch
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. raw:: html
-
-   <iframe width="560" height="315" src="https://www.youtube.com/embed/Dh9CL8fyG80" title="YouTube video player"
-   frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope;
-   picture-in-picture" allowfullscreen></iframe>
-
-You might need to restart your notebook at this stage to free some memory, or execute the following code:
+You might need to restart your notebook at this stage to free some memory, or excute the following code:
 
 .. code-block:: python
 
@@ -335,7 +311,7 @@ scheduler. The default optimizer used by the :class:`~transformers.Trainer` is :
 
     optimizer = AdamW(model.parameters(), lr=5e-5)
 
-Finally, the learning rate scheduler used by default is just a linear decay from the maximum value (5e-5 here) to 0:
+Finally, the learning rate scheduler used by default it just a linear decay form the maximum value (5e-5 here) to 0:
 
 .. code-block:: python
 

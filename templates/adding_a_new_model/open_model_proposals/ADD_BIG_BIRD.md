@@ -725,7 +725,7 @@ defined by the name of the class attribute you give the layer. Let's
 define a dummy model in PyTorch, called `SimpleModel` as follows:
 
 ```python
-from torch import nn
+import torch.nn as nn
 
 class SimpleModel(nn.Module):
     def __init__(self):

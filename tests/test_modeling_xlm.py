@@ -13,9 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 import unittest
 
-from transformers import XLMConfig, is_torch_available
+from transformers import is_torch_available
 from transformers.testing_utils import require_torch, slow, torch_device
 
 from .test_configuration_common import ConfigTester
@@ -27,6 +28,7 @@ if is_torch_available():
     import torch
 
     from transformers import (
+        XLMConfig,
         XLMForMultipleChoice,
         XLMForQuestionAnswering,
         XLMForQuestionAnsweringSimple,
@@ -95,22 +97,7 @@ class XLMModelTester:
             is_impossible_labels = ids_tensor([self.batch_size], 2).float()
             choice_labels = ids_tensor([self.batch_size], self.num_choices)
 
-        config = self.get_config()
-
-        return (
-            config,
-            input_ids,
-            token_type_ids,
-            input_lengths,
-            sequence_labels,
-            token_labels,
-            is_impossible_labels,
-            choice_labels,
-            input_mask,
-        )
-
-    def get_config(self):
-        return XLMConfig(
+        config = XLMConfig(
             vocab_size=self.vocab_size,
             n_special=self.n_special,
             emb_dim=self.hidden_size,
@@ -129,6 +116,18 @@ class XLMModelTester:
             use_proj=self.use_proj,
             num_labels=self.num_labels,
             bos_token_id=self.bos_token_id,
+        )
+
+        return (
+            config,
+            input_ids,
+            token_type_ids,
+            input_lengths,
+            sequence_labels,
+            token_labels,
+            is_impossible_labels,
+            choice_labels,
+            input_mask,
         )
 
     def create_and_check_xlm_model(
@@ -350,6 +349,7 @@ class XLMModelTest(ModelTesterMixin, GenerationTesterMixin, unittest.TestCase):
     all_generative_model_classes = (
         (XLMWithLMHeadModel,) if is_torch_available() else ()
     )  # TODO (PVP): Check other models whether language generation is also applicable
+    test_sequence_classification_problem_types = True
 
     # XLM has 2 QA models -> need to manually set the correct labels for one of them here
     def _prepare_for_class(self, inputs_dict, model_class, return_labels=False):
